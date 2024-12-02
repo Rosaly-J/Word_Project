@@ -3,8 +3,14 @@ FROM python:3.12-slim
 # 작업 디렉토리 설정
 WORKDIR /app
 
+# 필요한 시스템 의존성 설치
+RUN apt-get update && apt-get install -y libpq-dev gcc curl
+
 # Poetry 설치
-RUN pip install --no-cache-dir poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Poetry의 경로를 PATH에 추가
+ENV PATH="${PATH}:/root/.local/bin"
 
 # Poetry 설정 (가상 환경 비활성화)
 RUN poetry config virtualenvs.create false

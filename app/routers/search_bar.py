@@ -25,3 +25,4 @@ async def suggest_words(request: SuggestRequest = Body(...)):
 
     # 제안이 없으면 빈 배열 반환
     return {"suggestions": suggestions}
+

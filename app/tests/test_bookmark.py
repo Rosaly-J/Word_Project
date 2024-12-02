@@ -56,7 +56,5 @@ async def test_add_word_to_bookmark(db):
                 "example": "This is an example."
             }
         )
-        # 응답 확인
-        print(response.json())
         assert response.status_code == 200
         assert response.json()["message"] == "Word added to bookmark successfully."

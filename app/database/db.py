@@ -23,6 +23,8 @@ SQLALCHEMY_DATABASE_URL = os.getenv("postgresql+asyncpg://hwi:1234@localhost/voc
 engine = create_async_engine(
     "postgresql+asyncpg://hwi:1234@localhost/voca",  # .env 파일에서 불러온 PostgreSQL 연결 URL
     echo=True,
+    pool_size=5,
+    max_overflow=10
 )
 
 # AsyncSessionLocal 설정

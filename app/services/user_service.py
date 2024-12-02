@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.models import User
+from app.models.models import User, SearchHistory
+from typing import List, Dict
 import bcrypt
 
 async def get_user_by_kakao_id(db: AsyncSession, kakao_id: str):
@@ -25,3 +26,18 @@ async def create_user(db: AsyncSession, user_data: dict):
     await db.commit()  # 비동기 커밋
     await db.refresh(new_user)  # 새로 생성된 사용자 데이터 갱신
     return new_user
+
+async def get_search_history(
+    db: AsyncSession, user_id: int, page: int = 1, page_size: int = 10
+) -> List[Dict]:
+    """
+    사용자의 검색 기록을 페이지네이션하여 가져옵니다.
+    """
+    # 검색 기록 쿼리 작성
+    query = select(SearchHistory).filter(SearchHistory.user_id == user_id)
+    query = query.limit(page_size).offset((page - 1) * page_size)
+    result = await db.execute(query)
+    records = result.scalars().all()
+
+    # 결과 반환
+    return [{"id": record.id, "word": record.word, "created_at": record.created_at} for record in records]

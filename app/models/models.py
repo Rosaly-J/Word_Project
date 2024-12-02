@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, DateTime, Enum, Boolean, BigInteger,Text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, DateTime, Enum, Boolean, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from enum import Enum as PyEnum
@@ -27,7 +27,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=True)      # 이메일 (카카오 계정)
     nickname = Column(String, nullable=False)               # 닉네임
     password = Column(String, nullable=True)               # 쇼설 로그인이라 이쪽에서 관리 안해서 nullable=True
-    created_at = Column(TIMESTAMP, server_default="CURRENT_TIMESTAMP")  # 생성 날짜
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())  # 생성 날짜
 
     # SearchHistory와의 관계 설정
     search_history = relationship("SearchHistory", back_populates="user")

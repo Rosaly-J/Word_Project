@@ -1,5 +1,9 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
 import httpx
+from app.database.db import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.models import SearchHistory, User
+from sqlalchemy.future import select
 
 router = APIRouter()
 
@@ -49,3 +53,27 @@ async def search_word(word: str = Query(..., description="The word to search for
     }
 
     return word_details
+
+@router.get("/search/history")
+async def get_search_history(
+    page: int = Query(1, ge=1),  # 페이지는 1 이상이어야 함
+    page_size: int = Query(10, ge=1, le=100),  # 페이지 크기는 1 이상 100 이하
+    db: AsyncSession = Depends(get_db),
+):
+
+    user_id = 1  # 인증 시스템과 연동 필요
+    offset = (page - 1) * page_size
+
+    # 검색 기록 쿼리
+    query = select(SearchHistory).filter(SearchHistory.user_id == user_id).offset(offset).limit(page_size)
+    result = await db.execute(query)
+    records = result.scalars().all()
+
+    # 검색 기록이 없을 경우
+    if not records:
+        raise HTTPException(status_code=404, detail="No search history found")
+
+    # 검색 기록을 JSON 직렬화 가능하도록 변환
+    return {
+        "records": [record.to_dict() for record in records]
+    }

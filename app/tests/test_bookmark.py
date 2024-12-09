@@ -184,3 +184,61 @@ async def test_list_bookmark_words(db: AsyncSession):
         assert len(data) == 2  # 단어 2개가 저장되어 있음
         assert data[0]["word"] == "apple"
         assert data[1]["word"] == "banana"
+
+@pytest.mark.asyncio
+async def test_update_bookmark_word(db: AsyncSession):
+    """
+    단어 정보 수정 테스트
+    """
+    # 테스트 사용자 추가
+    test_user = User(
+        kakao_id=123, email="test@example.com", nickname="testuser", password="testpass"
+    )
+    result = await db.execute(select(User).filter_by(kakao_id=123))
+    existing_user = result.scalars().first()
+
+    if existing_user:
+        return existing_user  # 이미 존재하면 기존 사용자 반환
+
+    db.add(test_user)
+    await db.commit()
+    await db.refresh(test_user)
+
+    # 테스트 단어 추가
+    test_word = BookmarkWord(
+        word="apple",
+        definition="A fruit",
+        example="I like apples.",
+        user_id=test_user.id
+    )
+    db.add(test_word)
+    await db.commit()
+    await db.refresh(test_word)
+
+    # 수정 요청 데이터
+    update_data = {
+        "definition": "A common fruit",
+        "example": "Apples are red and sweet."
+    }
+
+    # API 요청 테스트
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.patch(
+            f"/bookmark/words/{test_word.id}",
+            json=update_data,
+            headers={"Authorization": "Bearer test_token"}  # 인증 헤더 추가
+        )
+        assert response.status_code == 200
+
+        updated_word = response.json()
+        assert updated_word["definition"] == update_data["definition"]
+        assert updated_word["example"] == update_data["example"]
+
+        # 데이터베이스에서 확인
+        result = await db.execute(select(BookmarkWord).filter_by(id=test_word.id))
+        word = result.scalars().first()
+        assert word.definition == update_data["definition"]
+        assert word.example == update_data["example"]
+
+
+# 코드 리펙토링 가능한지 -> 중복 되는 코드 (테스트 사용자 한번만 사용하고 class로 묶을 수 있는지)

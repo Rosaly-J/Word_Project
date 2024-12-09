@@ -71,3 +71,28 @@ async def get_bookmark_words(user_id: int, db: AsyncSession):
         }
         for word in words
     ]
+
+async def update_bookmark_word(word_id: int, user_id: int, update_data: dict, db: AsyncSession):
+    """
+    단어장에 등록된 단어를 수정합니다.
+    """
+    # 해당 단어 조회
+    result = await db.execute(select(BookmarkWord).filter_by(id=word_id, user_id=user_id))
+    word = result.scalars().first()
+
+    if not word:
+        raise HTTPException(status_code=404, detail="Word not found or does not belong to the user.")
+
+    # 단어 정보 업데이트
+    for key, value in update_data.items():
+        if hasattr(word, key):
+            setattr(word, key, value)
+
+    await db.commit()
+    await db.refresh(word)
+    return {
+        "id": word.id,
+        "word": word.word,
+        "definition": word.definition,
+        "example": word.example,
+    }

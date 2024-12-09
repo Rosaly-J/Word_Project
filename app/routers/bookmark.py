@@ -1,5 +1,5 @@
 
-from app.services.bookmark_service import get_bookmark_words_by_user, delete_word_by_id
+from app.services.bookmark_service import get_bookmark_words_by_user, delete_word_by_id, update_bookmark_word
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -78,3 +78,18 @@ async def list_bookmark_words(
     사용자 단어장 목록 조회
     """
     return await get_bookmark_words(user_id=current_user["id"], db=db)
+
+@router.patch("/{id}")
+async def update_bookmark_word_route(
+    id: int,
+    update_data: dict,  # 수정할 데이터
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # 사용자 인증 정보
+):
+    """
+    사용자가 등록한 단어 정보 수정
+    """
+    try:
+        return await update_bookmark_word(word_id=id, user_id=current_user["id"], update_data=update_data, db=db)
+    except HTTPException as e:
+        raise e

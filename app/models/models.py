@@ -33,6 +33,8 @@ class User(Base):
     search_history = relationship("SearchHistory", back_populates="user")
     # BookmarkWord와의 관계 설정
     bookmark_words = relationship("BookmarkWord", back_populates="user", cascade="all, delete-orphan")
+    # WordBookmark와의 관계 설정
+    word_bookmarks = relationship("WordBookmark", back_populates="user")
 
 
 class SearchHistory(Base):
@@ -83,3 +85,14 @@ class BookmarkWord(Base):
 
     # 관계 설정
     user = relationship("User", back_populates="bookmark_words")
+
+class WordBookmark(Base):
+    __tablename__ = "word_bookmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # 사용자 ID
+    word = Column(String, nullable=False, unique=True)  # 단어
+    meaning = Column(String, nullable=False)  # 의미
+    example = Column(String, nullable=True)  # 예문
+
+    user = relationship("User", back_populates="word_bookmarks")  # 사용자와 관계 설정

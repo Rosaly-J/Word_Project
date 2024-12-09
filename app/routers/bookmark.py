@@ -68,3 +68,13 @@ async def delete_bookmark_word(
         return await delete_word_by_id(word_id=id, user_id=current_user["id"], db=db)
     except HTTPException as e:
         raise e
+
+@router.get("/")
+async def list_bookmark_words(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # 사용자 인증 및 ID 획득
+):
+    """
+    사용자 단어장 목록 조회
+    """
+    return await get_bookmark_words(user_id=current_user["id"], db=db)

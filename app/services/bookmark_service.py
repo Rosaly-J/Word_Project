@@ -55,3 +55,19 @@ async def get_bookmark_words_by_user(user_id: int, db: AsyncSession) -> List[Boo
     result = await db.execute(select(BookmarkWord).filter_by(user_id=user_id))
     words = result.scalars().all()
     return words
+
+async def get_bookmark_words(user_id: int, db: AsyncSession):
+    """
+    사용자별 단어장 목록 조회
+    """
+    result = await db.execute(select(BookmarkWord).filter_by(user_id=user_id))
+    words = result.scalars().all()
+    return [
+        {
+            "id": word.id,
+            "word": word.word,
+            "definition": word.definition,
+            "example": word.example,
+        }
+        for word in words
+    ]

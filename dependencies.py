@@ -6,7 +6,7 @@ from app.database.db import get_db
 from jose import jwt, JWTError
 from sqlalchemy import select
 
-from schemas.oauth import oauth2_scheme
+from app.schemas.oauth import oauth2_scheme
 
 # 시크릿 키 및 알고리즘
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key")

@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from models.models import WordBookmark, BookmarkWord
+from app.models.models import WordBookmark, BookmarkWord
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from typing import List
 
 def add_word_to_bookmark(user_id: int, word: str, meaning: str, example: str, db: Session):
     # 사용자가 등록한 단어가 100개를 초과했는지 확인
@@ -46,3 +47,11 @@ async def delete_word_by_id(word_id: int, user_id: int, db: AsyncSession):
     await db.delete(word)
     await db.commit()
     return {"message": "Word deleted successfully."}
+
+async def get_bookmark_words_by_user(user_id: int, db: AsyncSession) -> List[BookmarkWord]:
+    """
+    주어진 사용자 ID에 해당하는 단어장 목록을 조회합니다.
+    """
+    result = await db.execute(select(BookmarkWord).filter_by(user_id=user_id))
+    words = result.scalars().all()
+    return words

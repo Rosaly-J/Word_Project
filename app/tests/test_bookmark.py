@@ -106,3 +106,41 @@ async def test_delete_word(db: AsyncSession):
         result = await db.execute(select(BookmarkWord).filter_by(id=test_word.id))
         deleted_word = result.scalars().first()
         assert deleted_word is None
+
+
+@pytest.mark.asyncio
+async def test_get_bookmark_words(db: AsyncSession):
+    """
+    단어장 목록 조회 테스트
+    """
+    # 테스트 사용자 추가
+    test_user = User(
+        kakao_id=123, email="test@example.com", nickname="testuser", password="testpass"
+    )
+    result = await db.execute(select(User).filter_by(kakao_id=123))
+    existing_user = result.scalars().first()
+
+    if existing_user:
+        return existing_user  # 이미 존재하면 기존 사용자 반환
+
+    db.add(test_user)
+    await db.commit()
+    await db.refresh(test_user)
+
+    # 테스트 단어 추가
+    words = [
+        BookmarkWord(word="apple", definition="A fruit", example="I ate an apple.", user_id=test_user.id),
+        BookmarkWord(word="banana", definition="A fruit", example="I like bananas.", user_id=test_user.id),
+    ]
+    db.add_all(words)
+    await db.commit()
+
+    # API 요청 테스트
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.get("/bookmark/words", params={"user_id": test_user.id})
+        assert response.status_code == 200
+
+        data = response.json()
+        assert len(data) == 2  # 단어 2개가 저장되어 있음
+        assert data[0]["word"] == "apple"
+        assert data[1]["word"] == "banana"

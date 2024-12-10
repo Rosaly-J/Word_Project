@@ -7,7 +7,7 @@ from main import app
 from app.models.models import Base, SearchHistory, User
 from httpx import AsyncClient
 from app.database.db import async_sessionmaker
-from sqlalchemy import text
+from sqlalchemy import text, select
 
 client = TestClient(app)
 
@@ -172,3 +172,89 @@ class TestSearchHistory:
             data = response.json()["records"]
             assert len(data) == 1  # 두 번째 페이지에는 1개만 남음
             assert data[0]["word"] == "test_word_3"  # 마지막 검색 기록
+
+@pytest.mark.asyncio
+class TestSearchHistory:
+    """
+    검색 기록 삭제 테스트 클래스
+    """
+    async def create_test_user(self, db: AsyncSession, kakao_id=123):
+        """
+        테스트 사용자를 생성하거나 반환
+        """
+        result = await db.execute(select(User).filter_by(kakao_id=kakao_id))
+        existing_user = result.scalars().first()
+
+        if existing_user:
+            return existing_user  # 이미 존재하면 기존 사용자 반환
+
+        test_user = User(
+            kakao_id=kakao_id,
+            email="test@example.com",
+            nickname="testuser"
+        )
+        db.add(test_user)
+        await db.commit()
+        await db.refresh(test_user)
+        return test_user
+
+    async def test_delete_single_search_history(self, client: AsyncClient, db: AsyncSession, create_test_user):
+        """
+        특정 검색 기록 삭제 테스트
+        """
+        # 테스트 사용자 생성
+        test_user = await create_test_user()
+
+        # 검색 기록 추가
+        test_history = SearchHistory(user_id=test_user.id, word="default_word")
+        db.add(test_history)
+        await db.commit()
+        await db.refresh(test_history)
+
+        # 단일 삭제 API 호출
+        response = await client.delete(
+            f"/search/history/{test_history.id}",
+            headers={"Authorization": "Bearer test_token"},
+        )
+        print(test_history)
+        print(test_user)
+        print(response)
+
+        # 응답 검증
+        assert response.status_code == 200
+        assert response.json()["message"] == f"Search history with ID {test_history.id} deleted successfully."
+
+    async def test_delete_all_search_history(self, client: AsyncClient, db: AsyncSession, create_test_user):
+        """
+        사용자 검색 기록 전체 삭제 테스트
+        """
+        # 테스트 사용자 생성
+        test_user = await create_test_user()
+
+        # 검색 기록 추가
+        histories = [
+            SearchHistory(user_id=test_user.id, word="word1"),
+            SearchHistory(user_id=test_user.id, word="word2"),
+        ]
+        db.add_all(histories)
+        await db.commit()
+
+        # 생성된 기록 수 확인
+        result = await db.execute(select(SearchHistory).filter_by(user_id=test_user.id))
+        initial_histories = result.scalars().all()
+        assert len(initial_histories) == 2
+
+        # 전체 삭제 API 호출
+        response = await client.delete(
+            "/search/history",
+            headers={"Authorization": "Bearer test_token"},
+        )
+
+        # 응답 검증
+        assert response.status_code == 200
+        assert response.json()["message"] == "All search history deleted successfully."
+
+        # 데이터베이스 상태 검증
+        result = await db.execute(select(SearchHistory).filter_by(user_id=test_user.id))
+        remaining_histories = result.scalars().all()
+        assert len(remaining_histories) == 0

@@ -48,7 +48,6 @@ naming_convention = {
 # 의존성으로 사용할 DB 세션 생성 함수
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
-        print(session)
         yield session
 
 # Base 정의

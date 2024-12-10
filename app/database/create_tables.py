@@ -6,7 +6,7 @@ from app.models.models import Base
 SQLALCHEMY_DATABASE_URL = "postgresql+asyncpg://hwi:1234@localhost:5432/voca"
 
 # 비동기 엔진 생성
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 
 async def create_tables():
     """

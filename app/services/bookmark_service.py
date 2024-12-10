@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.models.models import WordBookmark, BookmarkWord
+from app.models.models import WordBookmark, BookmarkWord, SearchHistory
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
+from sqlalchemy import delete
 
 def add_word_to_bookmark(user_id: int, word: str, meaning: str, example: str, db: Session):
     # 사용자가 등록한 단어가 100개를 초과했는지 확인
@@ -96,3 +97,45 @@ async def update_bookmark_word(word_id: int, user_id: int, update_data: dict, db
         "definition": word.definition,
         "example": word.example,
     }
+
+async def delete_all_bookmark_words(user_id: int, db: AsyncSession):
+    """
+    사용자 단어장에 등록된 모든 단어 삭제
+    """
+    # 단어가 존재하는지 확인
+    result = await db.execute(select(BookmarkWord).filter_by(user_id=user_id))
+    words = result.scalars().all()
+
+    if not words:
+        raise HTTPException(status_code=404, detail="No words found for this user.")
+
+    # 모든 단어 삭제
+    await db.execute(delete(BookmarkWord).where(BookmarkWord.user_id == user_id))
+    await db.commit()
+
+    return {"message": "All bookmark words deleted successfully."}
+
+async def delete_single_search_history(history_id: int, user_id: int, db: AsyncSession):
+    """
+    특정 검색 기록 삭제
+    """
+    # 검색 기록 확인
+    result = await db.execute(select(SearchHistory).filter_by(id=history_id, user_id=user_id))
+    history = result.scalars().first()
+
+    if not history:
+        raise HTTPException(status_code=404, detail="Search history not found or does not belong to the user.")
+
+    # 검색 기록 삭제
+    await db.delete(history)
+    await db.commit()
+    return {"message": "Search history deleted successfully."}
+
+async def delete_all_search_history(user_id: int, db: AsyncSession):
+    """
+    사용자 검색 기록 전체 삭제
+    """
+    # 전체 삭제
+    await db.execute(delete(SearchHistory).where(SearchHistory.user_id == user_id))
+    await db.commit()
+    return {"message": "All search history deleted successfully."}

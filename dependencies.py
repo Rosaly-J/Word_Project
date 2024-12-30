@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.models import User
 from app.database.db import get_db
-from jose import jwt, JWTError
+import jwt
 from sqlalchemy import select
 
 from app.schemas.oauth import oauth2_scheme
@@ -20,7 +20,7 @@ async def get_current_user(
     # 테스트용 토큰 처리
     if token == "test_token":
         # 테스트용 사용자 생성 및 반환
-        user = User(id=1, email="test@example.com", nickname="testuser")
+        user = User(kakao_id=123, id=1, email="test@example.com", nickname="testuser")
         return user  # 테스트 사용자 반환
 
     try:
@@ -37,7 +37,9 @@ async def get_current_user(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         return user
 
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
 
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 

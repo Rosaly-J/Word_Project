@@ -12,8 +12,8 @@ from dependencies import get_current_user
 # Pydantic 모델 정의
 class BookmarkWordCreate(BaseModel):
     word: str
-    definition: str | None = None  # 선택적 필드
-    example: str | None = None  # 선택적 필드
+    definition: str = None  # 선택적 필드
+    example: str = None  # 선택적 필드
 
 router = APIRouter()
 
@@ -113,7 +113,6 @@ async def delete_all_bookmark_words(
 
     return {"message": "All bookmark words deleted successfully."}
 
-
 @router.delete("/history/{id}", response_model=dict)
 async def delete_search_history(
     id: int,
@@ -125,7 +124,6 @@ async def delete_search_history(
     """
     result = await db.execute(select(SearchHistory))
     search_history = result.scalars().all()
-    print(search_history, "\n","\n","\n")
 
     if not search_history:
         raise HTTPException(status_code=404, detail="Search history not found")
@@ -135,8 +133,7 @@ async def delete_search_history(
 
     return {"message": f"Search history with ID {id} deleted successfully."}
 
-
-@router.delete("/history", response_model=dict)
+@router.delete("/remove", response_model=dict)
 async def delete_all_search_histories(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
@@ -146,6 +143,8 @@ async def delete_all_search_histories(
     """
     result = await db.execute(select(SearchHistory).filter_by(user_id=current_user["id"]))
     search_histories = result.scalars().all()
+    print("????")
+    print(search_histories, "\n","\n","\n")
 
     if not search_histories:
         raise HTTPException(status_code=404, detail="No search histories found")

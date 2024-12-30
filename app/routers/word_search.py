@@ -25,8 +25,8 @@ async def get_word_info(word: str):
 
         return response.json()
 
-# /search/word 엔드포인트 구현
-@router.get("/search/word")
+# word 엔드포인트 구현
+@router.get("word")
 async def search_word(word: str = Query(..., description="The word to search for")):
     word_info = await get_word_info(word)
 
@@ -54,7 +54,7 @@ async def search_word(word: str = Query(..., description="The word to search for
 
     return word_details
 
-@router.get("/search/history")
+@router.get("history")
 async def get_search_history(
     page: int = Query(1, ge=1),  # 페이지는 1 이상이어야 함
     page_size: int = Query(10, ge=1, le=100),  # 페이지 크기는 1 이상 100 이하

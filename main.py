@@ -18,5 +18,5 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(word_search_router)
-app.include_router(search_router, prefix="/search", tags=["Search"])
+app.include_router(search_router)
 app.include_router(bookmark_router)

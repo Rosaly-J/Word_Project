@@ -8,8 +8,8 @@ client = TestClient(app)
 @pytest.fixture
 def kakao_mock_response(mocker):
     # Kakao API를 모킹하여 테스트
-    mocker.patch("app.services.kakao_oauth.KakaoOAuthService.get_access_token", return_value="mock_access_token")
-    mocker.patch("app.services.kakao_oauth.KakaoOAuthService.get_user_info", return_value={
+    mocker.patch("app.services.kakao_oauth.KakaoOAuthService.get_access_token", new_callble=mocker.AsyncMock, return_value="mock_access_token")
+    mocker.patch("app.services.kakao_oauth.KakaoOAuthService.get_user_info", new_callble=mocker.AsyncMock, return_value={
         "id": 123456789,
         "kakao_account": {"email": "testuser@kakao.com"},
         "properties": {"nickname": "TestUser"},

@@ -6,8 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from main import app
 from app.models.models import Base, SearchHistory, User
 from httpx import AsyncClient
-from app.database.db import async_sessionmaker
+from app.database.db import AsyncSessionLocal
 from sqlalchemy import text, select
+from dependencies import get_db
 
 client = TestClient(app)
 
@@ -69,9 +70,6 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)  # 테이블 생성
     yield
-    async with engine.begin() as conn:
-        # 테스트가 모두 끝난 뒤 실행
-        await conn.run_sync(Base.metadata.drop_all)  # 모든 테이블 삭제
 
 # 비동기 테스트 세션 생성
 @pytest.fixture(scope="function")
@@ -79,7 +77,7 @@ async def test_db():
     """
     테스트용 비동기 데이터베이스 세션 생성
     """
-    async with async_sessionmaker() as session:
+    async with AsyncSessionLocal() as session:
         yield session
 
 # 테스트 데이터 초기화 픽스처
@@ -126,26 +124,26 @@ async def setup_test_data(test_db: AsyncSession):
 
 
 # 테스트 클래스
+@pytest.mark.asyncio
 class TestSearchHistory:
-    @pytest.mark.asyncio
+
     async def test_get_search_history_success(self, setup_test_data):
         """
         성공적으로 검색 기록 조회
         """
         async with AsyncClient(app=app, base_url="http://test") as client:
-            response = await client.get("/search/history", params={"page": 1, "page_size": 2})
+            response = await client.get("/search/history/", params={"page": 1, "page_size": 2})
 
             # 응답 상태 코드 확인
             assert response.status_code == 200
 
             # JSON 데이터 확인
             data = response.json()["records"]
-            print("반환된 데이터:", data)
             assert len(data) == 2  # 페이지 크기만큼 결과 반환
             assert data[0]["word"] == "test_word_1"  # 첫 번째 검색 기록
             assert data[1]["word"] == "test_word_2"  # 두 번째 검색 기록
 
-    @pytest.mark.asyncio
+
     async def test_get_search_history_no_records(self):
         """
         검색 기록이 없을 때 404 반환
@@ -157,7 +155,7 @@ class TestSearchHistory:
             assert response.status_code == 404
             assert response.json()["detail"] == "No search history found"
 
-    @pytest.mark.asyncio
+
     async def test_get_search_history_pagination(self, setup_test_data):
         """
         페이지네이션 테스트
@@ -216,8 +214,8 @@ class TestSearchHistory:
             f"/search/history/{test_history.id}",
             headers={"Authorization": "Bearer test_token"},
         )
-        print(test_history)
-        print(test_user)
+        print(test_history.id)
+        print(test_user.id)
         print(response)
 
         # 응답 검증
@@ -243,10 +241,12 @@ class TestSearchHistory:
         result = await db.execute(select(SearchHistory).filter_by(user_id=test_user.id))
         initial_histories = result.scalars().all()
         assert len(initial_histories) == 2
+        print("!!!!!")
+        print(initial_histories)
 
         # 전체 삭제 API 호출
         response = await client.delete(
-            "/search/history",
+            "/remove",
             headers={"Authorization": "Bearer test_token"},
         )
 

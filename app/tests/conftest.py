@@ -1,10 +1,15 @@
 import asyncio
+from unittest.mock import AsyncMock
+
 import pytest
 from app.database.db import AsyncSessionLocal
 from sqlalchemy.future import select
 from app.models.models import User
 from httpx import AsyncClient
 from main import app
+from sqlalchemy.ext.asyncio import AsyncSession
+from dependencies import get_db
+
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -13,8 +18,6 @@ def event_loop():
     yield loop
     loop.close()
 
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 @pytest.fixture(scope="function")
 async def db() -> AsyncSession:
@@ -26,11 +29,11 @@ async def db() -> AsyncSession:
 
 @pytest.fixture
 async def create_test_user(db: AsyncSession):
-    async def _create_user(kakao_id=123):
+    async def _create_user(kakao_id=123, id=1):
         """
         테스트용 사용자 생성
         """
-        result = await db.execute(select(User).filter_by(kakao_id=kakao_id))
+        result = await db.execute(select(User).filter_by(id=id))
         existing_user = result.scalars().first()
 
         if existing_user:
@@ -38,6 +41,7 @@ async def create_test_user(db: AsyncSession):
 
         test_user = User(
             kakao_id=kakao_id,
+            id=id,
             email="test@example.com",
             nickname="testuser"
         )
@@ -53,3 +57,12 @@ async def client():
     async with AsyncClient(app=app, base_url="http://test") as c:
         yield c
 
+@pytest.fixture(scope="function", autouse=True)
+def override_get_db():
+    # Mock 세션 생성
+    mock_session = AsyncMock()
+
+    # get_db를 Mock으로 대체
+    app.dependency_overrides[get_db] = lambda: mock_session
+    yield mock_session
+    app.dependency_overrides.pop(get_db)

@@ -175,7 +175,7 @@ async def test_list_bookmark_words(db: AsyncSession):
     # API 요청 테스트
     async with AsyncClient(app=app, base_url="http://test") as client:
         response = await client.get(
-            "/bookmark/words",
+            "/bookmark/words/",
             headers={"Authorization": "Bearer test_token"}  # 인증 헤더 추가
         )
         assert response.status_code == 200

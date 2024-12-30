@@ -16,7 +16,7 @@ class SuggestResponse(BaseModel):
     suggestions: List[str]
 
 # /search/suggest 엔드포인트 구현
-@router.post("/search/suggest", response_model=SuggestResponse)
+@router.post("suggest", response_model=SuggestResponse)
 async def suggest_words(request: SuggestRequest = Body(...)):
     query = request.query.lower()
 

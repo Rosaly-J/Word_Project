@@ -1,5 +1,6 @@
 ## 프로젝트 폴더 구조
 
+```
 project_root/
 ├── app/
 │   ├── main.py               # FastAPI 애플리케이션 엔트리포인트
@@ -41,3 +42,4 @@ project_root/
 │       └── connection.py     # WebSocket 연결 설정 및 핸들러
 │       └── events.py         # WebSocket 이벤트 관리
 └── requirements.txt          # 패키지 종속성 목록
+```
